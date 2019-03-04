@@ -20,15 +20,18 @@ class Tokenizer:
 
     def __init__(self, code):
         self.code = code
-        for ignore_char in IGNORE_CHARACTERS:
-            self.code = self.code.replace(ignore_char, '')
+        self._strip_code()
+
 
     def tokenize(self) -> List[Token]:
         tokens = []
         while self.code:
             tokens.append(self.single_tokenize())
-            self.code = self.code.strip()
         return tokens
+
+    def _strip_code(self):
+        for ignore_char in IGNORE_CHARACTERS:
+            self.code = self.code.replace(ignore_char, '')
 
     def single_tokenize(self) -> Token:
         for token_type, regex in TOKEN_PATTERNS:
