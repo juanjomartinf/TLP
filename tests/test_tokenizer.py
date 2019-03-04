@@ -15,6 +15,13 @@ class TestTokenizer(unittest.TestCase):
         tokens = self.tokenize(expression)
         self.assertEqual(tokens, [])
 
+    def test_repr_ok(self):
+        expression = "S"
+        tokens = self.tokenize(expression)
+        self.assertEqual(len(tokens), 1)
+        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_START_STATE)
+        self.assertIn(ttypes.AUTOMATON_START_STATE, repr(tokens[0]))
+
     def test_tokenize_start_state_ok(self):
         expression = "S"
         tokens = self.tokenize(expression)
