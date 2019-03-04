@@ -26,5 +26,7 @@ TOKEN_PATTERNS = [
     (AUTOMATON_TOKEN, r'[a-z]'),
     (EPSILON, r'€'),
     (LINE_BREAK, '\n'),
-    (OR, r'|')
+    (OR, '\|')
 ]
+
+IGNORE_CHARACTERS = [' ', '\t']
