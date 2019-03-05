@@ -1,6 +1,6 @@
 from typing import List, Set, Union
 
-from automaton4u.parser.exceptions import UnexpectedTokenTypeException
+from automaton4u.parser.exceptions import UnexpectedTokenTypeException, StateNotFoundException
 from automaton4u.tokenizer import ttypes, Token
 
 """
@@ -27,10 +27,27 @@ class Grammar:
 
 class AutomatonState:
 
-    def __init__(self, state_name: str, transitions:List[List[Token]]=None, other_automaton_states=None):
+    def __init__(self, state_name: str, transitions: List[List[Token]] = None, other_automaton_states=None):
         self.state_name = state_name
         self.transitions = transitions or []
         self.other_automaton_states = other_automaton_states or {}
+
+    @property
+    def is_terminal(self):
+        if not self.other_automaton_states:
+            return True
+
+        for transition in self.transitions:
+            if all(token.token_type != ttypes.AUTOMATON_STATE for token in transition):
+                return True
+        return False
+
+    def __repr__(self):
+        all_transitions = []
+        for transition in self.transitions:
+            transition_str = "".join(t.value for t in transition)
+            all_transitions.append(transition_str)
+        return f"{self.state_name} -> {' | '.join(all_transitions)}"
 
 
 class Parser:
@@ -40,17 +57,21 @@ class Parser:
 
     def parse(self) -> AutomatonState:
         automaton_state_list = self._parse_grammar()
-        states = {automaton_state.state_name : automaton_state for automaton_state in automaton_state_list}
+        states = {automaton_state.state_name: automaton_state for automaton_state in automaton_state_list}
 
         for automaton_state in automaton_state_list:
             for transitions in automaton_state.transitions:
                 for transition in transitions:
                     if transition.token_type in [ttypes.AUTOMATON_STATE, ttypes.AUTOMATON_START_STATE]:
+                        if transition.value not in states:
+                            raise StateNotFoundException(f"State {transition.value} mentioned but not declared.")
                         automaton_state.other_automaton_states[transition.value] = states[transition.value]
 
         starting_state = states.get('S', None)
         if starting_state is None:
-            starting_state = AutomatonState(state_name='S', transitions=list(states.keys()), other_automaton_states=states)
+            starting_state = AutomatonState(state_name='S',
+                                            transitions=[[Token(ttypes.AUTOMATON_STATE, value=state.state_name)] for
+                                                         state in automaton_state_list], other_automaton_states=states)
 
         return starting_state
 
@@ -90,7 +111,9 @@ class Parser:
             token_list.append(self.consume([ttypes.AUTOMATON_STATE, ttypes.AUTOMATON_TOKEN]))
 
         if self.peek(ttypes.EPSILON):
-            self.consume(ttypes.EPSILON)
+            token_list.append(self.consume(ttypes.EPSILON))
+        if not token_list:
+            raise UnexpectedTokenTypeException(f"Expected token type {ttypes.AUTOMATON_STATE} but got NONE.")
         return token_list
 
     def consume(self, expected_type: Union[str, List[str]]) -> Token:
@@ -104,4 +127,4 @@ class Parser:
 
     def peek(self, expected_type: Union[str, List[str]]) -> bool:
         expected_type = [expected_type] if isinstance(expected_type, str) else expected_type
-        return self.tokens[0].token_type in expected_type
+        return self.tokens and self.tokens[0].token_type in expected_type
