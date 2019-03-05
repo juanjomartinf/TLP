@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Set, Union
 
 from automaton4u.parser.exceptions import UnexpectedTokenTypeException
 from automaton4u.tokenizer import ttypes, Token
@@ -25,32 +25,76 @@ class Grammar:
         self.p = p
 
 
-class Parser:
-    tokens = list()
-    sigma = set()
-    n = set()
+class AutomatonState:
 
-    def initialize(self, tokens: List[Token]):
+    def __init__(self, state_name: str, transitions:List[List[Token]]=None, other_automaton_states=None):
+        self.state_name = state_name
+        self.transitions = transitions or []
+        self.other_automaton_states = other_automaton_states or {}
+
+
+class Parser:
+
+    def __init__(self, tokens: List[Token]):
         self.tokens = tokens
 
-    def parse_grammar_atomic(self):
+    def parse(self) -> AutomatonState:
+        automaton_state_list = self._parse_grammar()
+        states = {automaton_state.state_name : automaton_state for automaton_state in automaton_state_list}
+
+        for automaton_state in automaton_state_list:
+            for transitions in automaton_state.transitions:
+                for transition in transitions:
+                    if transition.token_type in [ttypes.AUTOMATON_STATE, ttypes.AUTOMATON_START_STATE]:
+                        automaton_state.other_automaton_states[transition.value] = states[transition.value]
+
+        starting_state = states.get('S', None)
+        if starting_state is None:
+            starting_state = AutomatonState(state_name='S', transitions=list(states.keys()), other_automaton_states=states)
+
+        return starting_state
+
+    def _parse_grammar(self) -> List[AutomatonState]:
+        automaton_state_list = [self._parse_automaton_assignation()]
+
+        while self.peek(ttypes.LINE_BREAK):
+            self.consume(ttypes.LINE_BREAK)
+            automaton_state_list.append(self._parse_automaton_assignation())
+
+        return automaton_state_list
+
+    def _parse_automaton_assignation(self) -> AutomatonState:
+        if self.peek(ttypes.AUTOMATON_START_STATE):
+            state_token = self.consume(ttypes.AUTOMATON_START_STATE)
+        else:
+            state_token = self.consume(ttypes.AUTOMATON_STATE)
+
+        self.consume(ttypes.GRAMMAR_DEFINITION_ARROW)
+
+        state = AutomatonState(state_token.value, transitions=self._parse_grammar_list())
+
+        return state
+
+    def _parse_grammar_list(self) -> List[List[Token]]:
+        grammar_token_list = [self._parse_grammar_atomic()]
+
+        while self.peek(ttypes.OR):
+            self.consume(ttypes.OR)
+            grammar_token_list.append(self._parse_grammar_atomic())
+
+        return grammar_token_list
+
+    def _parse_grammar_atomic(self) -> List[Token]:
+        token_list = []
         while self.peek([ttypes.AUTOMATON_STATE, ttypes.AUTOMATON_TOKEN]):
-            if self.peek([ttypes.AUTOMATON_TOKEN]):
-                self.sigma = self.sigma | self.consume([ttypes.AUTOMATON_TOKEN])
-            else:
-                self.n = self.n | self.consume([ttypes.AUTOMATON_STATE])
+            token_list.append(self.consume([ttypes.AUTOMATON_STATE, ttypes.AUTOMATON_TOKEN]))
 
-        if self.peek([ttypes.EPSILON]):
-            self.consume([ttypes.EPSILON])
+        if self.peek(ttypes.EPSILON):
+            self.consume(ttypes.EPSILON)
+        return token_list
 
-    def parse_grammar_list(self):
-        self.parse_grammar_atomic()
-
-        while self.peek([ttypes.OR]):
-            self.consume([ttypes.OR])
-            self.parse_grammar_atomic()
-
-    def consume(self, expected_type: List[str]) -> Token:
+    def consume(self, expected_type: Union[str, List[str]]) -> Token:
+        expected_type = [expected_type] if isinstance(expected_type, str) else expected_type
         token = self.tokens.pop(0)
 
         if token.token_type in expected_type:
@@ -58,5 +102,6 @@ class Parser:
         else:
             raise UnexpectedTokenTypeException(f"Expected token type {expected_type} but got {token.token_type}")
 
-    def peek(self, expected_type: List[str]) -> bool:
+    def peek(self, expected_type: Union[str, List[str]]) -> bool:
+        expected_type = [expected_type] if isinstance(expected_type, str) else expected_type
         return self.tokens[0].token_type in expected_type
