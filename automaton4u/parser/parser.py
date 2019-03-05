@@ -1,4 +1,4 @@
-from typing import List, Set, Union
+from typing import List, Union
 
 from automaton4u.parser.exceptions import UnexpectedTokenTypeException, StateNotFoundException
 from automaton4u.tokenizer import ttypes, Token
@@ -9,21 +9,7 @@ from automaton4u.tokenizer import ttypes, Token
     Grammar List:= <Grammar Atomic> (<OR> <Grammar Atomic>)*
     Grammar Atomic:= (<AUTOMATON_STATE> | <AUTOMATON_TOKEN>)+ | <EPSILON>
     
-    
-    sigma: Terminal alphabet
-    n: Non-terminal alphabet
-    s: Initial symbol
-    p: Production rules
 """
-
-
-class Grammar:
-    def __init__(self, sigma: Set[str], n: Set[str], s: str, p: Set[str]):
-        self.sigma = sigma
-        self.n = n
-        self.s = s
-        self.p = p
-
 
 class AutomatonState:
 

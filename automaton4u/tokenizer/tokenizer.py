@@ -22,7 +22,6 @@ class Tokenizer:
         self.code = code
         self._strip_code()
 
-
     def tokenize(self) -> List[Token]:
         tokens = []
         while self.code:
