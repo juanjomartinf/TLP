@@ -19,14 +19,14 @@ class TestTokenizer(unittest.TestCase):
         expression = "S"
         tokens = self.tokenize(expression)
         self.assertEqual(len(tokens), 1)
-        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_START_STATE)
-        self.assertIn(ttypes.AUTOMATON_START_STATE, repr(tokens[0]))
+        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_STATE)
+        self.assertIn(ttypes.AUTOMATON_STATE, repr(tokens[0]))
 
     def test_tokenize_start_state_ok(self):
         expression = "S"
         tokens = self.tokenize(expression)
         self.assertEqual(len(tokens), 1)
-        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_START_STATE)
+        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_STATE)
 
     def test_normal_state_ok(self):
         expression = "A"
@@ -68,13 +68,13 @@ class TestTokenizer(unittest.TestCase):
         expression = "S     "
         tokens = self.tokenize(expression)
         self.assertEqual(len(tokens), 1)
-        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_START_STATE)
+        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_STATE)
 
     def test_left_strip_ok(self):
         expression = "              S"
         tokens = self.tokenize(expression)
         self.assertEqual(len(tokens), 1)
-        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_START_STATE)
+        self.assertEqual(tokens[0].token_type, ttypes.AUTOMATON_STATE)
 
     def test_raise_unknown_token(self):
         expression = "1234"
@@ -86,7 +86,7 @@ class TestTokenizer(unittest.TestCase):
         tokens = self.tokenize(expression)
         self.assertEqual(len(tokens), 3)
         s, arrow, a = tokens
-        self.assertEqual(s.token_type, ttypes.AUTOMATON_START_STATE)
+        self.assertEqual(s.token_type, ttypes.AUTOMATON_STATE)
         self.assertEqual(arrow.token_type, ttypes.GRAMMAR_DEFINITION_ARROW)
         self.assertEqual(a.token_type, ttypes.AUTOMATON_TOKEN)
 
@@ -95,7 +95,7 @@ class TestTokenizer(unittest.TestCase):
         tokens = self.tokenize(expression)
         self.assertEqual(len(tokens), 5)
         s, arrow, a, _or, b = tokens
-        self.assertEqual(s.token_type, ttypes.AUTOMATON_START_STATE)
+        self.assertEqual(s.token_type, ttypes.AUTOMATON_STATE)
         self.assertEqual(arrow.token_type, ttypes.GRAMMAR_DEFINITION_ARROW)
         self.assertEqual(a.token_type, ttypes.AUTOMATON_TOKEN)
         self.assertEqual(_or.token_type, ttypes.OR)
@@ -108,7 +108,7 @@ class TestTokenizer(unittest.TestCase):
         self.assertEqual(len(tokens), 9)
         s, a1, a, _or, b, nl, c, a2, d = tokens
 
-        self.assertEqual(s.token_type, ttypes.AUTOMATON_START_STATE)
+        self.assertEqual(s.token_type, ttypes.AUTOMATON_STATE)
         self.assertEqual(a1.token_type, ttypes.GRAMMAR_DEFINITION_ARROW)
         self.assertEqual(a.token_type, ttypes.AUTOMATON_TOKEN)
         self.assertEqual(_or.token_type, ttypes.OR)

@@ -5,7 +5,7 @@ from automaton4u.tokenizer import ttypes, Token
 
 """
     Grammar:= <Automaton Assignation> (<LINE_BREAK > <Automaton Assignation>)*
-    Automaton Assignation:= [<AUTOMATON_START_STATE>, <AUTOMATON_STATE>] <GRAMMAR_DEFINITION_ARROW> <Grammar List>
+    Automaton Assignation:= <AUTOMATON_STATE> <GRAMMAR_DEFINITION_ARROW> <Grammar List>
     Grammar List:= <Grammar Atomic> (<OR> <Grammar Atomic>)*
     Grammar Atomic:= (<AUTOMATON_STATE> | <AUTOMATON_TOKEN>)+ | <EPSILON>
     
@@ -48,18 +48,12 @@ class Parser:
         for automaton_state in automaton_state_list:
             for transitions in automaton_state.transitions:
                 for transition in transitions:
-                    if transition.token_type in [ttypes.AUTOMATON_STATE, ttypes.AUTOMATON_START_STATE]:
+                    if transition.token_type == ttypes.AUTOMATON_STATE:
                         if transition.value not in states:
                             raise StateNotFoundException(f"State {transition.value} mentioned but not declared.")
                         automaton_state.other_automaton_states[transition.value] = states[transition.value]
 
-        starting_state = states.get('S', None)
-        if starting_state is None:
-            starting_state = AutomatonState(state_name='S',
-                                            transitions=[[Token(ttypes.AUTOMATON_STATE, value=state.state_name)] for
-                                                         state in automaton_state_list], other_automaton_states=states)
-
-        return starting_state
+        return automaton_state_list[0]
 
     def _parse_grammar(self) -> List[AutomatonState]:
         automaton_state_list = [self._parse_automaton_assignation()]
@@ -71,10 +65,7 @@ class Parser:
         return automaton_state_list
 
     def _parse_automaton_assignation(self) -> AutomatonState:
-        if self.peek(ttypes.AUTOMATON_START_STATE):
-            state_token = self.consume(ttypes.AUTOMATON_START_STATE)
-        else:
-            state_token = self.consume(ttypes.AUTOMATON_STATE)
+        state_token = self.consume(ttypes.AUTOMATON_STATE)
 
         self.consume(ttypes.GRAMMAR_DEFINITION_ARROW)
 
