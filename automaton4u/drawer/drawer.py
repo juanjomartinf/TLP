@@ -1,7 +1,6 @@
 from typing import Dict, List
 from automaton4u.parser.parser import AutomatonState, Parser
-from automaton4u.tokenizer import Tokenizer
-
+from automaton4u.tokenizer import Tokenizer, ttypes, Token
 
 import os, sys, inspect, io
 
@@ -13,7 +12,6 @@ if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
 from transitions.extensions import MachineFactory
-
 
 """
 Example code:
@@ -36,6 +34,7 @@ class Matter(object):
         with open('illo.png', 'wb') as output_file:
             output_file.write(stream.getvalue())
 
+
 def get_states(parent_state: AutomatonState, states: Dict[str, AutomatonState]) -> Dict[str, AutomatonState]:
     for state_name, state in parent_state.other_automaton_states.items():
         if state_name not in states:
@@ -44,22 +43,49 @@ def get_states(parent_state: AutomatonState, states: Dict[str, AutomatonState]) 
 
     return states
 
+
 def get_transitions(states: Dict[str, AutomatonState]) -> List[List]:
     transitions = list()
+    states['FINAL'] = AutomatonState(state_name="FINAL")
+    pocessed_states = list(states.keys())
+    i = 0
     for state_name, state in states.items():
         for transition in state.transitions:
-            if len(transition) == 2:
-                transitions.append([transition[0].value, state.state_name, transition[1].value])
+            transition_buffer = []
+            last_transition = transition.pop(0)
+            last_state = state
 
-    return transitions
+
+            while transition:
+                sub_transition = transition.pop(0)
+                if last_transition.token_type == sub_transition.token_type == ttypes.AUTOMATON_TOKEN:
+                    transition_buffer.append([last_transition.value, last_state.state_name, f"I{i}"])
+                    last_state = AutomatonState(state_name=f'I{i}')
+                    pocessed_states.append(last_state.state_name)
+                    i += 1
+                else: # aA
+                    transition_buffer.append([last_transition.value, last_state.state_name, sub_transition.value])
+                last_transition = sub_transition
+
+            if last_transition.token_type == ttypes.AUTOMATON_TOKEN:
+                transition_buffer.append([last_transition.value, last_state.state_name, states['FINAL'].state_name])
+            elif len(transition_buffer) == 0 and last_transition.token_type == ttypes.AUTOMATON_STATE:
+                transition_buffer.append(["€", last_state.state_name, last_transition.value])
+            elif len(transition_buffer) == 0 and last_transition.token_type == ttypes.EPSILON:
+                transition_buffer.append(["€", last_state.state_name, states['FINAL'].state_name])
+
+            transitions += transition_buffer
+
+
+    return pocessed_states, transitions
+
 
 def draw(automaton_state: AutomatonState):
     automaton_states = dict()
     automaton_states[automaton_state.state_name] = automaton_state
     automaton_states = {**automaton_states, **get_states(automaton_state, automaton_states)}
 
-    states = sorted(automaton_states.keys())
-    transitions = get_transitions(automaton_states)
+    states, transitions = get_transitions(automaton_states)
 
     print(states)
     print(transitions)
@@ -68,23 +94,16 @@ def draw(automaton_state: AutomatonState):
 
     model = Matter()
     machine = graph_machine(model=model,
-                           states=states,
-                           transitions=transitions,
-                           auto_transitions=False,
-                           title="Automaton",
-                           show_conditions=True)
+                            states=states,
+                            transitions=transitions,
+                            auto_transitions=False,
+                            initial=states[0],
+                            title="Automaton",
+                            show_conditions=True)
     model.show_graph()
 
-
-grammar = 'A -> aB | bC \n C -> aC | bC | cB \n B -> bB | aD | a \n D -> aD | a | bB'
+grammar = 'A -> B \n B -> a'
+grammar = """S -> abA | B | baB | € \n A -> bA | b \n B -> aS | cb"""
 tokens = Tokenizer(grammar).tokenize()
 result = Parser(tokens).parse()
 draw(result)
-
-
-
-
-
-
-
-
