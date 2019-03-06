@@ -1,0 +1,3 @@
+S -> abA | B | baB | €
+A -> bA | b
+B -> aS | cb

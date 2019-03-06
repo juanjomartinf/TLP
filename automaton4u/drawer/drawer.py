@@ -31,8 +31,7 @@ class Matter(object):
         # print(self.get_graph(**kwargs).string())
         stream = io.BytesIO()
         self.get_graph(**kwargs).draw(stream, prog='dot', format='png')
-        with open('illo.png', 'wb') as output_file:
-            output_file.write(stream.getvalue())
+        return stream.getvalue()
 
 
 def get_states(parent_state: AutomatonState, states: Dict[str, AutomatonState]) -> Dict[str, AutomatonState]:
@@ -87,9 +86,6 @@ def draw(automaton_state: AutomatonState):
 
     states, transitions = get_transitions(automaton_states)
 
-    print(states)
-    print(transitions)
-
     graph_machine = MachineFactory.get_predefined(graph=True, nested=True)
 
     model = Matter()
@@ -100,10 +96,4 @@ def draw(automaton_state: AutomatonState):
                             initial=states[0],
                             title="Automaton",
                             show_conditions=True)
-    model.show_graph()
-
-grammar = 'A -> B \n B -> a'
-grammar = """S -> abA | B | baB | € \n A -> bA | b \n B -> aS | cb"""
-tokens = Tokenizer(grammar).tokenize()
-result = Parser(tokens).parse()
-draw(result)
+    return model.show_graph()
