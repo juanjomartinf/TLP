@@ -58,18 +58,6 @@ class TestParser(unittest.TestCase):
         self.assertEqual(result.transitions[0][0].value, 'a')
         self.assertEqual(result.transitions[1][0].value, '€')
 
-    def test_parse_phantom_s_grammar(self):
-        grammar = "A -> a"
-        result = self.parse(grammar)
-        self.assertEqual(result.state_name, 'S')
-        self.assertEqual(len(result.transitions), 1)
-        self.assertEqual(result.transitions[0][0].value, 'A')
-        self.assertEqual(len(result.other_automaton_states), 1)
-        self.assertIn('A', result.other_automaton_states)
-        A = result.other_automaton_states['A']
-        self.assertEqual(len(A.transitions), 1)
-        self.assertEqual(A.transitions[0][0].value, 'a')
-
     def test_parse_two_assignations(self):
         grammar = "S -> aB\nB -> c"
         result = self.parse(grammar)
